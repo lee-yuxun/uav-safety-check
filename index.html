@@ -3,391 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UAV PRO | 飛航風險管理系統</title>
+    <title>UAV PRO 飛航風險管理系統 V5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
         
-        /* 螢幕操作環境 */
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background-color: #f1f5f9; 
-            -webkit-tap-highlight-color: transparent;
-            /* 極大底部緩衝：確保最後一項能捲動到 HUD 上方 */
-            padding-bottom: 800px; 
+            background-color: #f1f5f9;
+            padding-bottom: 700px; /* 強化底部防遮擋空間 */
         }
 
-        /* 螢幕版大型觸控按鈕 */
-        .risk-option input[type="radio"] { display: none; }
-        .risk-option label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 3px solid #cbd5e1;
-            font-weight: 900;
-            border-radius: 18px;
-            height: 70px;
-            background: #ffffff;
-            color: #475569;
-            font-size: 1.25rem;
-        }
+        /* 隱藏原生 Radio */
+        .risk-option input { display: none; }
 
-        .btn-high:checked + label { background-color: #ef4444; color: white; border-color: #991b1b; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
-        .btn-mid:checked + label { background-color: #f59e0b; color: white; border-color: #92400e; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
-        .btn-low:checked + label { background-color: #10b981; color: white; border-color: #065f46; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
-
-        .section-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .big-checkbox { width: 45px; height: 45px; cursor: pointer; }
-
-        /* --- A4 專業單面報告樣式 (僅列印時觸發) --- */
         @media print {
-            @page {
-                size: A4 portrait;
-                margin: 5mm; 
-            }
-            body {
-                background: white !important;
-                padding-bottom: 0 !important;
-                margin: 0 !important;
-                color: black !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+            body { padding-bottom: 0 !important; background: white !important; }
             .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            @page { size: A4 portrait; margin: 10mm; }
             
-            #print-report-container { display: block !important; }
-            
-            /* 隱藏所有操作用的卡片 */
-            .section-card, #decision-hud, .spacer-div { display: none !important; }
-
-            .report-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 5px;
+            .report-table td, .report-table th { 
+                padding: 6px 10px !important; 
+                border: 1px solid #000 !important;
+                font-size: 11pt !important;
             }
-            .report-table th, .report-table td {
-                border: 1px solid #000;
-                padding: 5px 8px;
-                text-align: left;
-                font-size: 10.5pt;
-                line-height: 1.2;
-            }
-            .report-table th { background-color: #f0f0f0 !important; font-weight: 900; text-align: center; }
-            
-            .report-title { 
-                font-size: 18pt !important; 
-                font-weight: 900; 
-                text-align: center; 
-                margin-bottom: 10px; 
-                border-bottom: 2px solid #000; 
-                padding-bottom: 3px; 
-            }
-            
-            .meta-info { 
-                display: grid; 
-                grid-template-columns: 1fr 1fr; 
-                gap: 5px; 
-                margin-bottom: 10px; 
-                font-weight: bold; 
-                font-size: 10pt;
-                border: 1px solid #ddd;
-                padding: 8px;
-                background: #fafafa !important;
-            }
-            
-            .risk-tag {
-                display: inline-block;
-                padding: 2px 8px;
-                border-radius: 4px;
-                font-weight: 900;
-                font-size: 9.5pt;
-                border: 1px solid #000;
-                text-align: center;
-                min-width: 80px;
-            }
-            .tag-high { background-color: #fee2e2 !important; color: #b91c1c !important; }
-            .tag-mid { background-color: #fef3c7 !important; color: #92400e !important; }
-            .tag-low { background-color: #d1fae5 !important; color: #047857 !important; }
-
-            .decision-final-box {
-                margin-top: 10px;
-                border: 2px solid #000;
-                padding: 10px;
-                background: white !important;
-                break-inside: avoid;
-            }
-            .signature-area {
-                margin-top: 15px;
-                display: flex;
-                justify-content: space-between;
-                font-weight: bold;
-                font-size: 10.5pt;
+            .risk-tag { 
+                padding: 2px 8px !important; 
+                border: 1px solid #333 !important;
+                font-weight: bold !important;
+                background-color: #eee !important;
+                -webkit-print-color-adjust: exact;
             }
         }
 
-        #print-report-container { display: none; }
-        .spacer-div { height: 400px; width: 100%; }
+        .print-only { display: none; }
+        
+        /* 選項按鈕互動 */
+        .option-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        input[value="high"]:checked + .option-btn, input[value="no"]:checked + .option-btn { background-color: #dc2626 !important; color: white; border-color: #991b1b; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
+        input[value="mid"]:checked + .option-btn { background-color: #d97706 !important; color: white; border-color: #92400e; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3); }
+        input[value="safe"]:checked + .option-btn, input[value="yes"]:checked + .option-btn { background-color: #059669 !important; color: white; border-color: #065f46; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3); }
     </style>
 </head>
-<body class="p-2 sm:p-4 lg:p-6">
+<body class="p-4 md:p-6">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- 螢幕標題欄 -->
-        <header class="section-header rounded-[30px] p-8 text-white shadow-2xl mb-6 relative overflow-hidden no-print">
-            <div class="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-black tracking-tighter">無人機飛航風險管理系統</h1>
-                    <p class="text-slate-400 text-sm mt-1 font-bold tracking-widest uppercase opacity-80">Professional Flight Safety Intelligence</p>
-                </div>
-                <button onclick="window.print()" class="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-2xl text-base font-black transition backdrop-blur-md border border-white/20">
-                    🖨️ 導出專業 A4 報告
-                </button>
-            </div>
-        </header>
-
-        <!-- 基本資訊 (操作介面) -->
-        <section class="section-card bg-white rounded-[25px] p-8 shadow-sm border border-slate-200 mb-6 grid grid-cols-2 lg:grid-cols-5 gap-4 no-print">
-            <div class="col-span-2 lg:col-span-1 space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">任務日期</label>
-                <input type="date" id="mission_date" class="w-full bg-slate-50 border-b-2 border-slate-200 py-1 text-lg font-black text-slate-800 outline-none">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">場景類別</label>
-                <select id="mission_type" class="w-full bg-slate-50 border-b-2 border-slate-200 py-1 text-lg font-black text-slate-800 outline-none">
-                    <option value="火場搶救">🔥 火場</option><option value="山域搜救">⛰️ 山域</option>
-                    <option value="水域救援">💧 水域</option><option value="一般勤務">📦 一般</option>
-                </select>
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">執行次數</label>
-                <input type="number" id="mission_count" value="0" oninput="calculateRisk()" class="w-full bg-slate-50 border-b-2 border-slate-200 py-1 text-lg font-black text-blue-600 outline-none">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">操作手</label>
-                <input type="text" id="op_name" class="w-full bg-slate-50 border-b-2 border-slate-200 py-1 text-lg font-black text-slate-800 outline-none" placeholder="姓名">
-            </div>
-            <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">機體型號</label>
-                <input type="text" id="drone_model" class="w-full bg-slate-50 border-b-2 border-slate-200 py-1 text-lg font-black text-slate-800 outline-none" placeholder="型號">
-            </div>
-        </section>
-
-        <!-- 評估項目 (操作介面) -->
-        <div id="risk-sections-ui" class="space-y-6 no-print"></div>
-
-        <!-- 後勤紀錄 (操作介面) -->
-        <section class="section-card bg-slate-900 rounded-[25px] p-8 text-white shadow-xl mt-6 mb-12 border border-slate-800 relative z-10 no-print">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-                <div class="flex-1 text-white">
-                    <h3 class="text-2xl font-black">後勤紀錄與飛航日誌 (Log)</h3>
-                    <p class="text-slate-400 text-sm mt-1 font-medium">請落實維護紀錄與雲端日誌同步。</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4 w-full lg:w-auto">
-                    <label class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 cursor-pointer">
-                        <input type="checkbox" id="log_update" checked onchange="calculateRisk()" class="big-checkbox accent-blue-500">
-                        <span class="text-sm font-black whitespace-nowrap text-white">日誌已更新</span>
-                    </label>
-                    <label class="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/10 cursor-pointer">
-                        <input type="checkbox" id="cloud_sync" checked onchange="calculateRisk()" class="big-checkbox accent-blue-500">
-                        <span class="text-sm font-black whitespace-nowrap text-white">Log 已同步</span>
-                    </label>
-                </div>
-            </div>
-        </section>
-
-        <!-- 螢幕版強制佔位符 -->
-        <div class="spacer-div no-print"></div>
-
-        <!-- --- A4 報告專用容器 (僅列印時顯示) --- -->
-        <div id="print-report-container">
-            <h1 class="report-title">無人機飛航風險評估報告書</h1>
-            
-            <div class="meta-info">
-                <div>任務日期：<span id="p-date"></span></div>
-                <div>執行次數：<span id="p-count"></span> 次</div>
-                <div>案件類別：<span id="p-type"></span></div>
-                <div>機體型號：<span id="p-drone"></span></div>
-                <div>主要操作手：<span id="p-op"></span></div>
-                <div>後勤狀態：<span id="p-log"></span></div>
-            </div>
-
-            <table class="report-table">
-                <thead>
-                    <tr>
-                        <th style="width: 25%;">維度類別</th>
-                        <th style="width: 50%;">評估項目 (已勾選狀態)</th>
-                        <th style="width: 25%;">判定結果</th>
-                    </tr>
-                </thead>
-                <tbody id="print-table-body">
-                    <!-- 由 JS 動態生成，僅顯示勾選結果 -->
-                </tbody>
-            </table>
-
-            <div class="decision-final-box">
-                <div class="flex justify-between items-baseline">
-                    <h3 class="font-black text-lg underline">總體判定結果：<span id="p-final-title"></span></h3>
-                    <div class="font-bold text-sm">高風險: <span id="p-high-count"></span> | 中風險: <span id="p-mid-count"></span></div>
-                </div>
-                <p id="p-final-desc" class="mt-2 text-[10pt] italic font-medium text-gray-700"></p>
-            </div>
-
-            <div class="signature-area">
-                <div style="width: 45%;">現場指揮官簽章：<br><br><div style="border-bottom: 1px solid #000; height: 30px;"></div></div>
-                <div style="width: 45%;">操作手簽章：<br><br><div style="border-bottom: 1px solid #000; height: 30px;"></div></div>
+    <!-- 填寫介面 UI -->
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-[2.5rem] overflow-hidden no-print border border-slate-200">
+        
+        <!-- 頂部標題區 -->
+        <div class="bg-slate-900 p-10 text-white text-center md:text-left">
+            <h1 class="text-5xl font-black mb-3 tracking-tighter">UAV PRO 飛航風險管理</h1>
+            <div class="flex flex-col md:flex-row md:items-center gap-4 text-slate-400 text-xl">
+                <span>專業任務前置評估系統 V5.0</span>
+                <span class="hidden md:block">|</span>
+                <span class="text-blue-400 font-bold uppercase tracking-widest">Safe Flight Protocol</span>
             </div>
         </div>
 
-        <!-- 螢幕操作專用 HUD -->
-        <div class="fixed bottom-6 left-6 right-6 z-[100] no-print">
-            <div id="decision-hud" class="max-w-6xl mx-auto bg-white/95 backdrop-blur-xl border-4 border-slate-200 rounded-[30px] p-6 shadow-2xl transition-all duration-500">
-                <div class="flex flex-col md:flex-row items-center gap-8 text-slate-800">
-                    <div class="flex gap-8 border-r-2 border-slate-100 pr-8 shrink-0 text-center">
-                        <div><p class="text-[10px] font-black text-slate-400">HIGH</p><p id="h-count" class="text-4xl font-black text-slate-300">0</p></div>
-                        <div><p class="text-[10px] font-black text-slate-400">MID</p><p id="m-count" class="text-4xl font-black text-slate-300">0</p></div>
+        <!-- 基本資訊欄 -->
+        <div class="p-10 grid grid-cols-1 md:grid-cols-2 gap-10 bg-slate-50 border-b border-slate-200">
+            <div class="space-y-3">
+                <label class="block text-2xl font-black text-slate-800">📅 任務執行日期</label>
+                <input type="date" id="mission_date" class="w-full p-5 text-3xl border-4 border-slate-200 rounded-2xl focus:border-blue-600 outline-none bg-white">
+            </div>
+            <div class="space-y-3">
+                <label class="block text-2xl font-black text-slate-800">🚀 場景執行次數 (累積)</label>
+                <input type="number" id="mission_count" placeholder="例如：5" class="w-full p-5 text-3xl border-4 border-slate-200 rounded-2xl focus:border-blue-600 outline-none bg-white" oninput="calculateRisk()">
+            </div>
+        </div>
+
+        <form id="riskForm" class="p-10 space-y-16">
+            
+            <!-- 維度一：環境與空域因素 -->
+            <section class="space-y-8">
+                <h2 class="text-4xl font-black text-blue-900 mb-8 flex items-center gap-4">
+                    <span class="bg-blue-600 text-white w-12 h-12 flex items-center justify-center rounded-xl">01</span>
+                    環境與空域因素
+                </h2>
+                <div class="grid grid-cols-1 gap-8">
+                    <!-- 項目 1 -->
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">1. 空域合法性 (紅/黃/綠區)</h3>
+                            <p class="text-slate-500 text-xl mt-2">查閱 Drone Map 確認是否具備緊急空域授權</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-6">
+                            <label class="risk-option"><input type="radio" name="env_airspace" value="high" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">高 (禁)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_airspace" value="mid" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">中 (限)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_airspace" value="safe" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">安 (綠)</div></label>
+                        </div>
                     </div>
-                    <div class="flex-1 text-center md:text-left">
-                        <h4 id="h-title" class="text-2xl font-black">準備就緒...</h4>
-                        <p id="h-desc" class="text-base text-slate-500 mt-1 font-medium italic">請勾選上方維度項目進行判定</p>
+
+                    <!-- 項目 2：氣象與能見度 (已移動) -->
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">2. 氣象與環境能見度</h3>
+                            <p class="text-slate-500 text-xl mt-2">風速 > 7m/s、降雨或能見度不足 500m 為高風險</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-6">
+                            <label class="risk-option"><input type="radio" name="env_weather" value="high" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">高 (危)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_weather" value="mid" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">中 (警)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_weather" value="safe" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">安 (佳)</div></label>
+                        </div>
                     </div>
-                    <div id="h-badge" class="px-10 py-4 rounded-2xl bg-slate-100 text-slate-400 font-black text-xl shadow-md uppercase">PENDING</div>
+
+                    <!-- 項目 3 -->
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">3. 靜態/動態電磁干擾 (EMI)</h3>
+                            <p class="text-slate-500 text-xl mt-2">鋼筋結構、高壓電塔或瞬間強電流影響</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-6">
+                            <label class="risk-option"><input type="radio" name="env_mag" value="high" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">高 (強)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_mag" value="mid" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">中 (弱)</div></label>
+                            <label class="risk-option"><input type="radio" name="env_mag" value="safe" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">安 (無)</div></label>
+                        </div>
+                    </div>
                 </div>
+            </section>
+
+            <!-- 維度二：操作與安全因素 -->
+            <section class="space-y-8">
+                <h2 class="text-4xl font-black text-emerald-900 mb-8 flex items-center gap-4">
+                    <span class="bg-emerald-600 text-white w-12 h-12 flex items-center justify-center rounded-xl">02</span>
+                    操作與安全維度
+                </h2>
+                <div class="grid grid-cols-1 gap-8">
+                    <!-- 項目：證照資格 (新增加項目) -->
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">4. 證照是否符合任務資格</h3>
+                            <p class="text-slate-500 text-xl mt-2">勾選「否」將自動計入高風險項</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <label class="risk-option"><input type="radio" name="op_license" value="yes" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">是 (符合)</div></label>
+                            <label class="risk-option"><input type="radio" name="op_license" value="no" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black text-red-600">否 (未符)</div></label>
+                        </div>
+                    </div>
+
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">5. 飛行前 360 度檢查</h3>
+                            <p class="text-slate-500 text-xl mt-2">結構、螺旋槳、動力系統與電子感測器</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-6">
+                            <label class="risk-option"><input type="radio" name="op_precheck" value="high" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">高 (漏)</div></label>
+                            <label class="risk-option"><input type="radio" name="op_precheck" value="mid" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">中 (瑕)</div></label>
+                            <label class="risk-option"><input type="radio" name="op_precheck" value="safe" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">安 (全)</div></label>
+                        </div>
+                    </div>
+
+                    <div class="p-8 bg-slate-50 rounded-[2rem] border-2 border-slate-100">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-black text-slate-800">6. 密集區域或飛越人群</h3>
+                            <p class="text-slate-500 text-xl mt-2">人員密度、避讓方案與安全緩衝距離</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-6">
+                            <label class="risk-option"><input type="radio" name="op_crowd" value="high" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">高 (密)</div></label>
+                            <label class="risk-option"><input type="radio" name="op_crowd" value="mid" onclick="calculateRisk()"><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">中 (稀)</div></label>
+                            <label class="risk-option"><input type="radio" name="op_crowd" value="safe" onclick="calculateRisk()" checked><div class="option-btn h-24 flex items-center justify-center rounded-2xl bg-white border-4 border-slate-200 text-2xl font-black">安 (無)</div></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 維度三：後勤與日誌紀錄 -->
+            <section class="space-y-8">
+                <h2 class="text-4xl font-black text-slate-900 mb-8 flex items-center gap-4">
+                    <span class="bg-slate-700 text-white w-12 h-12 flex items-center justify-center rounded-xl">03</span>
+                    後勤紀錄與飛航日誌 (Log)
+                </h2>
+                <div class="p-10 bg-slate-900 rounded-[2.5rem] text-white space-y-8 shadow-inner">
+                    <div class="flex items-center space-x-8 p-6 border-b border-slate-700">
+                        <input type="checkbox" id="log_maint" class="w-12 h-12 rounded-xl accent-blue-500 cursor-pointer">
+                        <label for="log_maint" class="text-3xl font-bold cursor-pointer">機體保養紀錄 (零件壽命/電池循環)</label>
+                    </div>
+                    <div class="flex items-center space-x-8 p-6 border-b border-slate-700">
+                        <input type="checkbox" id="log_flight" class="w-12 h-12 rounded-xl accent-blue-500 cursor-pointer">
+                        <label for="log_flight" class="text-3xl font-bold cursor-pointer">飛航日誌 Log 確認已同步上傳</label>
+                    </div>
+                    <div class="flex items-center space-x-8 p-6">
+                        <input type="checkbox" id="log_emergency" class="w-12 h-12 rounded-xl accent-blue-500 cursor-pointer">
+                        <label for="log_emergency" class="text-3xl font-bold cursor-pointer">減災決策預案 (起降應變點/手控模式)</label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 作者署名區 (美化旗艦版) -->
+            <div class="mt-20 py-10 px-12 bg-slate-50 rounded-[2rem] border-2 border-slate-100 flex flex-col md:flex-row items-center justify-between space-y-6 md:space-y-0">
+                <div class="flex flex-col items-center md:items-start space-y-1">
+                    <span class="text-slate-400 text-xs font-black uppercase tracking-[0.3em]">TABLE DESIGNER</span>
+                    <div class="flex items-baseline space-x-3">
+                        <span class="text-slate-900 text-2xl font-black">陳錦樺</span>
+                        <span class="text-slate-400 text-base font-medium">安全第一 · 預案先行</span>
+                    </div>
+                </div>
+                <div class="h-10 w-px bg-slate-300 hidden md:block"></div>
+                <div class="flex flex-col items-center md:items-end space-y-1">
+                    <span class="text-slate-400 text-xs font-black uppercase tracking-[0.3em]">SYSTEM DEVELOPER</span>
+                    <span class="text-slate-900 text-2xl font-black">李宇軒</span>
+                </div>
+            </div>
+
+            <!-- 下方預留緩衝 -->
+            <div class="h-48"></div>
+        </form>
+    </div>
+
+    <!-- 底部固定決策儀表板 (HUD - 旗艦版) -->
+    <div class="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-md border-t-8 border-slate-700 p-8 z-50 no-print shadow-[0_-20px_50px_rgba(0,0,0,0.5)]">
+        <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-10">
+            
+            <!-- 數據統計區 (佔 1/3) -->
+            <div class="flex items-center space-x-12 w-full lg:w-1/3 justify-around lg:justify-start">
+                <div class="text-center">
+                    <span class="block text-slate-400 font-bold text-sm uppercase tracking-tighter mb-1">High Risk</span>
+                    <span id="highCount" class="text-6xl font-black text-red-500 drop-shadow-md">0</span>
+                </div>
+                <div class="text-center">
+                    <span class="block text-slate-400 font-bold text-sm uppercase tracking-tighter mb-1">Mid Risk</span>
+                    <span id="midCount" class="text-6xl font-black text-amber-400 drop-shadow-md">0</span>
+                </div>
+            </div>
+            
+            <!-- 核心決策文字區 (佔 1/3) -->
+            <div id="decisionBox" class="w-full lg:w-1/3 p-8 rounded-3xl bg-slate-800 text-center transition-all duration-500 border-4 border-slate-600">
+                <span id="decisionIcon" class="text-4xl mr-4">⚪</span>
+                <span id="decisionText" class="text-3xl font-black text-slate-400 tracking-tight">請完成評估項目</span>
+            </div>
+
+            <!-- 操作區 (佔 1/3) -->
+            <div class="w-full lg:w-1/3 flex justify-center lg:justify-end">
+                <button onclick="window.print()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-12 py-6 rounded-2xl text-2xl font-black transition-all shadow-xl active:scale-95 flex items-center justify-center gap-4 group">
+                    <span>導出 A4 報告書</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 group-hover:translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- 列印報告區域 -->
+    <div class="print-only max-w-4xl mx-auto">
+        <div class="text-center border-b-8 border-black pb-6 mb-8">
+            <h1 class="text-4xl font-bold uppercase tracking-tighter">UAV Mission Pre-Flight Risk Report</h1>
+            <p class="mt-3 text-xl font-bold">執行日期：<span id="printDate"></span> | 安全日誌：已同步</p>
+        </div>
+
+        <table class="w-full border-collapse report-table mb-10">
+            <thead>
+                <tr class="bg-slate-100">
+                    <th class="border-2 p-3 text-left w-2/3 text-lg font-black">飛航維度與評估項目</th>
+                    <th class="border-2 p-3 text-center w-1/3 text-lg font-black">判定結果</th>
+                </tr>
+            </thead>
+            <tbody id="printContent">
+                <!-- JavaScript 動態生成 -->
+            </tbody>
+        </table>
+
+        <div class="grid grid-cols-2 gap-12 mt-16">
+            <div class="border-4 border-black p-6 rounded-2xl h-48 flex flex-col">
+                <h3 class="font-black border-b-2 border-black pb-2 text-xl mb-auto">任務指揮官簽署 (IC)</h3>
+                <div class="text-slate-400 text-xs text-right">DATE/TIME SIGNATURE</div>
+            </div>
+            <div class="border-4 border-black p-6 rounded-2xl h-48 flex flex-col">
+                <h3 class="font-black border-b-2 border-black pb-2 text-xl mb-auto">主操作人簽署 (PIC)</h3>
+                <div class="text-slate-400 text-xs text-right">CERTIFICATE NO: _________</div>
+            </div>
+        </div>
+
+        <div class="mt-20 pt-6 border-t-2 border-slate-300 flex justify-between text-sm font-bold text-slate-500">
+            <span>表格設計：陳錦樺 (安全第一 · 預案先行)</span>
+            <span>系統開發：李宇軒</span>
+        </div>
+    </div>
+
     <script>
-        const assessmentData = [
-            {
-                category: "一、環境與空域因素",
-                items: [
-                    { id: "e1", label: "空域合法性 (紅/黃/綠區)", info: "Drone Map 確認空域狀態與權限申請。", sop: "起飛前確認航管區域與高度限制。" },
-                    { id: "e2", label: "磁干擾 - 硬鐵 (Hard Iron)", info: "環境中的磁鐵、帶磁機件。", sop: "起降點 3m 內嚴禁強磁源。" },
-                    { id: "e3", label: "磁干擾 - 軟鐵 (Soft Iron)", info: "鋼筋混凝土、鐵軌等造成地磁扭曲。", sop: "避免在大型金屬結構旁起降。" },
-                    { id: "e4", label: "動態電磁干擾 (EMI)", info: "變壓器、電塔產生之動態磁場。", sop: "衛星數穩定度監控，異常應降落。" }
-                ]
-            },
-            {
-                category: "二、安全操作維度",
-                items: [
-                    { id: "s1", label: "飛行前檢查 (360度)", info: "槳葉、電池、動力系統全方位核查。", sop: "落實實體 360 度飛行前檢查。" },
-                    { id: "s2", label: "飛越人群或密集區域", info: "任務區域人車密度評估。", sop: "避開或擬定緊急備降決策方案。" },
-                    { id: "s3", label: "氣象與能見度", info: "風速、降雨及視距環境。", sop: "確認環境光影不影響避障效能。" },
-                    { id: "s4", label: "飛手身心狀態 (IMSAFE)", info: "壓力、疲勞或操作手熟練度自評。", sop: "若執行次數少風險將自動加權。" }
-                ]
-            }
-        ];
+        // 設定今日日期
+        document.getElementById('mission_date').valueAsDate = new Date();
 
-        const renderUI = () => {
-            const container = document.getElementById('risk-sections-ui');
-            container.innerHTML = assessmentData.map(section => `
-                <div class="bg-white rounded-[30px] shadow-lg border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 px-10 py-5 border-b-2 border-slate-200">
-                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">${section.category}</h2>
-                    </div>
-                    <div class="divide-y-2 divide-slate-50">
-                        ${section.items.map(item => `
-                            <div class="p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center hover:bg-slate-50/50 transition">
-                                <div class="lg:col-span-6 space-y-1">
-                                    <h4 class="text-2xl font-black text-slate-900 leading-tight">${item.label}</h4>
-                                    <p class="text-lg text-slate-500 font-medium">${item.info}</p>
-                                    <div class="inline-block mt-1 px-3 py-0.5 bg-blue-50 text-xs font-black text-blue-600 rounded-lg uppercase">SOP: ${item.sop}</div>
-                                </div>
-                                <div class="lg:col-span-6 grid grid-cols-3 gap-6 risk-option">
-                                    <div class="relative"><input type="radio" name="${item.id}" id="${item.id}-h" class="btn-high" data-label="高風險" onchange="calculateRisk()"><label for="${item.id}-h">高</label></div>
-                                    <div class="relative"><input type="radio" name="${item.id}" id="${item.id}-m" class="btn-mid" data-label="中風險" onchange="calculateRisk()"><label for="${item.id}-m">中</label></div>
-                                    <div class="relative"><input type="radio" name="${item.id}" id="${item.id}-l" class="btn-low" data-label="安全" checked onchange="calculateRisk()"><label for="${item.id}-l">安</label></div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
-        };
+        function calculateRisk() {
+            const form = document.getElementById('riskForm');
+            const data = new FormData(form);
+            const missionCount = parseInt(document.getElementById('mission_count').value) || 0;
+            
+            let high = 0;
+            let mid = 0;
 
-        const calculateRisk = () => {
-            let h = document.querySelectorAll('.btn-high:checked').length;
-            let m = document.querySelectorAll('.btn-mid:checked').length;
-            const countInput = document.getElementById('mission_count');
-            const count = parseInt(countInput.value) || 0;
-
-            if (count < 1) h += 1; else if (count < 5) m += 1;
-
-            document.getElementById('h-count').innerText = h;
-            document.getElementById('m-count').innerText = m;
-
-            let res = { type: 'safe', title: '✅ 安全可飛行', desc: '目前飛航風險極低。請依照既定計畫執行任務，隨時監控環境。', badge: 'Safe', color: 'border-green-500' };
-
-            if (h >= 2 || (h === 1 && m >= 3) || m >= 5) {
-                res = { type: 'danger', title: '❌ 綜合風險過高，中止任務', desc: '警告：累積風險過大，超出安全預案能力。請優化起降環境或重新評估。', badge: 'Abort', color: 'border-red-500' };
-            } else if (h === 1) {
-                res = { type: 'attention', title: '⚠️ 特別警告：高警戒飛行', desc: '具備單一高風險點。須指派觀察員輔助環境監視，隨時備手動操作。', badge: 'Warning', color: 'border-orange-500' };
-            } else if (m >= 3) {
-                res = { type: 'caution', title: '⚠ 謹慎飛行，需備妥預案', desc: '中風險項目累積。請確認所有減災 SOP 已完全落實並設定好 RTH。', badge: 'Caution', color: 'border-amber-500' };
+            // 統計選項
+            for (let [key, value] of data.entries()) {
+                if (value === 'high') high++;
+                if (value === 'mid') mid++;
+                // 證照資格判定
+                if (key === 'op_license' && value === 'no') high++;
             }
 
-            const hud = document.getElementById('decision-hud');
-            hud.className = `max-w-6xl mx-auto bg-white/95 backdrop-blur-xl border-4 rounded-[30px] p-6 shadow-2xl transition-all duration-500 ${res.color}`;
-            document.getElementById('h-title').innerText = res.title;
-            document.getElementById('h-desc').innerText = res.desc;
-            const badge = document.getElementById('h-badge');
-            badge.innerText = res.badge;
-            badge.className = `px-10 py-4 rounded-2xl font-black text-xl text-white shadow-lg ${res.type === 'danger' ? 'bg-red-600' : res.type === 'attention' ? 'bg-orange-600' : res.type === 'caution' ? 'bg-amber-600' : 'bg-green-600'}`;
+            // 任務經驗自動加權
+            if (missionCount > 0 && missionCount < 1) high++;
+            else if (missionCount >= 1 && missionCount < 5) mid++;
 
-            updatePrintReport(h, m, res);
-        };
+            // 更新 HUD
+            document.getElementById('highCount').innerText = high;
+            document.getElementById('midCount').innerText = mid;
 
-        const updatePrintReport = (h, m, res) => {
-            document.getElementById('p-date').innerText = document.getElementById('mission_date').value;
-            document.getElementById('p-count').innerText = document.getElementById('mission_count').value;
-            document.getElementById('p-type').innerText = document.getElementById('mission_type').value;
-            document.getElementById('p-op').innerText = document.getElementById('op_name').value || "未填寫";
-            document.getElementById('p-drone').innerText = document.getElementById('drone_model').value || "未填寫";
-            
-            const logS = document.getElementById('log_update').checked ? "日誌已更" : "未更新";
-            const cloudS = document.getElementById('cloud_sync').checked ? "雲端同步" : "未同步";
-            document.getElementById('p-log').innerText = `${logS} / ${cloudS}`;
+            const box = document.getElementById('decisionBox');
+            const icon = document.getElementById('decisionIcon');
+            const text = document.getElementById('decisionText');
 
-            document.getElementById('p-high-count').innerText = h;
-            document.getElementById('p-mid-count').innerText = m;
-            document.getElementById('p-final-title').innerText = res.title;
-            document.getElementById('p-final-desc').innerText = res.desc;
+            // 核心判定邏輯
+            if (high >= 2) {
+                setDecision(box, icon, text, "❌ 任務中止：風險過高", "bg-red-600", "text-white", "🚫", "border-red-400");
+            } else if (high === 1 && mid >= 3) {
+                setDecision(box, icon, text, "❌ 任務中止：綜合風險過大", "bg-red-500", "text-white", "🚫", "border-red-400");
+            } else if (high === 1 && mid <= 2) {
+                setDecision(box, icon, text, "⚠️ 條件執行：需極度謹慎", "bg-orange-500", "text-white", "⚠", "border-orange-300");
+            } else if (high === 0 && mid >= 5) {
+                setDecision(box, icon, text, "❌ 不建議起飛：累積風險過多", "bg-red-400", "text-white", "🚫", "border-red-300");
+            } else if (high === 0 && mid >= 3) {
+                setDecision(box, icon, text, "⚠ 謹慎飛行：預案先行", "bg-amber-500", "text-white", "⚡", "border-amber-300");
+            } else {
+                setDecision(box, icon, text, "✅ 安全：准許執行任務", "bg-emerald-600", "text-white", "✔", "border-emerald-400");
+            }
 
-            const printBody = document.getElementById('print-table-body');
-            let tableHTML = "";
-            
-            assessmentData.forEach(section => {
-                let sectionAdded = false;
-                section.items.forEach((item) => {
-                    const selectedInput = document.querySelector(`input[name="${item.id}"]:checked`);
-                    const riskLabel = selectedInput ? selectedInput.getAttribute('data-label') : "安全";
-                    const riskClass = riskLabel === "高風險" ? "tag-high" : riskLabel === "中風險" ? "tag-mid" : "tag-low";
+            updatePrintReport();
+        }
 
-                    tableHTML += `
-                        <tr>
-                            ${!sectionAdded ? `<td rowspan="${section.items.length}" style="font-weight:bold; vertical-align:middle; text-align:center;">${section.category}</td>` : ''}
-                            <td>
-                                <div style="font-weight:bold;">${item.label}</div>
-                                <div style="font-size:8pt; color:#444;">SOP: ${item.sop}</div>
-                            </td>
-                            <td style="text-align:center; vertical-align:middle;">
-                                <span class="risk-tag ${riskClass}">${riskLabel}</span>
-                            </td>
-                        </tr>
-                    `;
-                    sectionAdded = true;
-                });
+        function setDecision(box, icon, text, msg, bgColor, textColor, ico, borderColor) {
+            box.className = `w-full lg:w-1/3 p-8 rounded-3xl transition-all duration-500 border-8 ${bgColor} ${textColor} ${borderColor} scale-105 shadow-2xl`;
+            text.innerText = msg;
+            icon.innerText = ico;
+        }
+
+        function updatePrintReport() {
+            const printContent = document.getElementById('printContent');
+            const items = [
+                { id: "1. 空域合法性 (紅/黃/綠)", name: "env_airspace" },
+                { id: "2. 氣象與環境能見度", name: "env_weather" },
+                { id: "3. 電磁干擾分析 (EMI)", name: "env_mag" },
+                { id: "4. 證照符合任務資格", name: "op_license" },
+                { id: "5. 飛行前 360 度檢查", name: "op_precheck" },
+                { id: "6. 密集區域或飛越人群", name: "op_crowd" }
+            ];
+
+            let html = "";
+            items.forEach(item => {
+                const checkedNode = document.querySelector(`input[name="${item.name}"]:checked`);
+                if (!checkedNode) return;
+                
+                const val = checkedNode.value;
+                let label = "";
+                if (val === 'high') label = "🔴 HIGH RISK";
+                if (val === 'mid') label = "🟡 MODERATE";
+                if (val === 'safe') label = "🟢 SAFE";
+                if (val === 'yes') label = "🟢 QUALIFIED";
+                if (val === 'no') label = "🔴 NOT QUALIFIED";
+                
+                html += `<tr><td class="border-2 p-3 font-bold text-slate-800">${item.id}</td><td class="border-2 p-3 text-center font-black"><span class="risk-tag">${label}</span></td></tr>`;
             });
-            printBody.innerHTML = tableHTML;
-        };
 
-        window.onload = () => {
-            document.getElementById('mission_date').value = new Date().toISOString().split('T')[0];
-            renderUI();
-            calculateRisk();
-        };
+            printContent.innerHTML = html;
+            document.getElementById('printDate').innerText = document.getElementById('mission_date').value;
+        }
+
+        calculateRisk();
     </script>
 </body>
 </html>
