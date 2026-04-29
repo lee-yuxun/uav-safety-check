@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UAV PRO 飛航風險管理系統 V5.1</title>
+    <title>UAV PRO 飛航風險管理系統 V5.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
@@ -11,11 +11,12 @@
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: #f1f5f9;
-            padding-bottom: 500px; /* 螢幕緩衝 */
+            padding-bottom: 500px; /* 增加滾動補償 */
         }
 
         .risk-option input { display: none; }
 
+        /* 列印模式優化 */
         @media print {
             body { padding-bottom: 0 !important; background: white !important; }
             .no-print { display: none !important; }
@@ -26,17 +27,17 @@
 
         .print-only { display: none; }
         
-        /* 選項按鈕回歸經典色 */
+        /* 選項按鈕回饋 */
         .option-btn { transition: all 0.2s ease; cursor: pointer; border-width: 4px; }
         input[value="high"]:checked + .option-btn, input[value="no"]:checked + .option-btn { background-color: #ef4444 !important; color: white !important; border-color: #b91c1c; }
         input[value="mid"]:checked + .option-btn { background-color: #f59e0b !important; color: white !important; border-color: #b45309; }
         input[value="safe"]:checked + .option-btn, input[value="yes"]:checked + .option-btn { background-color: #10b981 !important; color: white !important; border-color: #047857; }
 
-        /* 手機端 Hub 壓縮 */
+        /* 手機端 Hub 佈局調整 */
         @media (max-width: 768px) {
-            .mobile-hub-compact { padding: 1rem !important; gap: 0.5rem !important; }
+            .mobile-hub-compact { padding: 0.75rem !important; gap: 0.5rem !important; }
             .mobile-hide-label { display: none; }
-            .mobile-text-sm { font-size: 1.25rem !important; }
+            .mobile-text-decision { font-size: 1.1rem !important; }
         }
     </style>
 </head>
@@ -44,34 +45,41 @@
 
     <div class="max-w-5xl mx-auto bg-white shadow-2xl rounded-[2.5rem] overflow-hidden no-print border border-slate-200">
         
-        <!-- 標題區 -->
+        <!-- 頂部標題 -->
         <div class="bg-slate-900 p-8 md:p-10 text-white">
             <h1 class="text-3xl md:text-5xl font-black mb-2 tracking-tighter">UAV PRO 飛航風險管理</h1>
-            <p class="text-slate-400 text-lg md:text-xl font-bold">V5.1 航空專業優化版</p>
+            <p class="text-slate-400 text-lg md:text-xl font-bold">V5.2 專業任務前置自檢系統</p>
         </div>
 
-        <!-- 基本資訊 -->
-        <div class="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 border-b">
+        <!-- 基本資訊區 (新增/保留 機型與姓名) -->
+        <div class="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 border-b">
             <div class="space-y-2">
                 <label class="block text-xl font-black text-slate-700">📅 任務日期</label>
-                <input type="date" id="mission_date" class="w-full p-4 text-2xl border-4 border-slate-200 rounded-2xl outline-none">
+                <input type="date" id="mission_date" class="w-full p-4 text-xl border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-500">
             </div>
             <div class="space-y-2">
-                <label class="block text-xl font-black text-slate-700">🚀 場景執行次數</label>
-                <input type="number" id="mission_count" placeholder="例如：10" class="w-full p-4 text-2xl border-4 border-slate-200 rounded-2xl outline-none" oninput="calculateRisk()">
+                <label class="block text-xl font-black text-slate-700">👤 操作者姓名</label>
+                <input type="text" id="pilot_name" placeholder="請輸入操作員" class="w-full p-4 text-xl border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-500">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-xl font-black text-slate-700">🛸 執行機型</label>
+                <input type="text" id="mission_uav" placeholder="例如：Mavic 3T / M30T" class="w-full p-4 text-xl border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-500">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-xl font-black text-slate-700">🚀 場景執行次數 (累積)</label>
+                <input type="number" id="mission_count" placeholder="0" class="w-full p-4 text-xl border-4 border-slate-200 rounded-2xl outline-none focus:border-blue-500" oninput="calculateRisk()">
             </div>
         </div>
 
         <form id="riskForm" class="p-6 md:p-10 space-y-12">
             
-            <!-- 一、環境與空域維度 -->
+            <!-- 維度一：環境與空域 -->
             <section class="space-y-6">
-                <h2 class="text-3xl font-black text-blue-900 border-l-8 border-blue-600 pl-4">一、環境與空域因素</h2>
+                <h2 class="text-3xl font-black text-blue-900 border-l-8 border-blue-600 pl-4 uppercase tracking-wider">I. 環境與空域因素</h2>
                 
-                <!-- 1. 空域 -->
                 <div class="p-6 bg-slate-50 rounded-3xl border-2">
                     <h3 class="text-2xl font-black text-slate-800">1. 空域合法性 (紅/黃/綠區)</h3>
-                    <p class="text-slate-500 mb-4 text-lg">確認 Drone Map 緊急授權狀態</p>
+                    <p class="text-slate-500 mb-4 text-lg">查閱 Drone Map 並確認緊急授權</p>
                     <div class="grid grid-cols-3 gap-3">
                         <label class="risk-option"><input type="radio" name="env_air" value="high" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">高</div></label>
                         <label class="risk-option"><input type="radio" name="env_air" value="mid" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">中</div></label>
@@ -79,10 +87,9 @@
                     </div>
                 </div>
 
-                <!-- 2. 氣象 -->
                 <div class="p-6 bg-slate-50 rounded-3xl border-2">
                     <h3 class="text-2xl font-black text-slate-800">2. 氣象與能見度</h3>
-                    <p class="text-slate-500 mb-4 text-lg">強風、雨霧或光線不足因素</p>
+                    <p class="text-slate-500 mb-4 text-lg">考量強風、雨霧與光線因素</p>
                     <div class="grid grid-cols-3 gap-3">
                         <label class="risk-option"><input type="radio" name="env_weather" value="high" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">高</div></label>
                         <label class="risk-option"><input type="radio" name="env_weather" value="mid" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">中</div></label>
@@ -90,10 +97,10 @@
                     </div>
                 </div>
 
-                <!-- 3. 硬鐵磁干擾 (新) -->
+                <!-- 磁干擾細分 -->
                 <div class="p-6 bg-slate-50 rounded-3xl border-2 border-amber-100">
                     <h3 class="text-2xl font-black text-slate-800">3. 靜態：硬鐵干擾 (Hard Iron)</h3>
-                    <p class="text-slate-500 mb-4 text-lg">實例：永久磁鐵、設備內磁性組件、強力磁吸座</p>
+                    <p class="text-slate-500 mb-4 text-lg">實例：永久磁鐵、設備內磁性組件</p>
                     <div class="grid grid-cols-3 gap-3">
                         <label class="risk-option"><input type="radio" name="mag_hard" value="high" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">強</div></label>
                         <label class="risk-option"><input type="radio" name="mag_hard" value="mid" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">弱</div></label>
@@ -101,10 +108,9 @@
                     </div>
                 </div>
 
-                <!-- 4. 軟鐵磁干擾 (新) -->
                 <div class="p-6 bg-slate-50 rounded-3xl border-2 border-amber-100">
                     <h3 class="text-2xl font-black text-slate-800">4. 靜態：軟鐵干擾 (Soft Iron)</h3>
-                    <p class="text-slate-500 mb-4 text-lg">實例：**建築鋼筋、鐵軌、雷達站金屬構架、漁船鋼質船體**</p>
+                    <p class="text-slate-500 mb-4 text-lg">實例：**鋼筋、鐵軌、雷達站構架、漁船鋼體**</p>
                     <div class="grid grid-cols-3 gap-3">
                         <label class="risk-option"><input type="radio" name="mag_soft" value="high" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">強</div></label>
                         <label class="risk-option"><input type="radio" name="mag_soft" value="mid" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">弱</div></label>
@@ -112,10 +118,9 @@
                     </div>
                 </div>
 
-                <!-- 5. 動態電磁干擾 (新) -->
                 <div class="p-6 bg-slate-50 rounded-3xl border-2 border-red-100">
                     <h3 class="text-2xl font-black text-slate-800">5. 動態：電磁干擾 (EMI / 電生磁)</h3>
-                    <p class="text-slate-500 mb-4 text-lg">實例：**雷達發射、漁船大功率電台、高壓電塔、變壓器**</p>
+                    <p class="text-slate-500 mb-4 text-lg">實例：**雷達發射、大功率電台、高壓電塔**</p>
                     <div class="grid grid-cols-3 gap-3">
                         <label class="risk-option"><input type="radio" name="mag_emi" value="high" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">危</div></label>
                         <label class="risk-option"><input type="radio" name="mag_emi" value="mid" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">監</div></label>
@@ -124,13 +129,13 @@
                 </div>
             </section>
 
-            <!-- 二、操作與安全維度 -->
+            <!-- 維度二：操作與安全 -->
             <section class="space-y-6">
-                <h2 class="text-3xl font-black text-emerald-900 border-l-8 border-emerald-600 pl-4">二、操作與安全維度</h2>
+                <h2 class="text-3xl font-black text-emerald-900 border-l-8 border-emerald-600 pl-4 uppercase tracking-wider">II. 操作與安全維度</h2>
                 
                 <div class="p-6 bg-slate-50 rounded-3xl border-2">
                     <h3 class="text-2xl font-black text-slate-800">6. 證照是否符合任務資格</h3>
-                    <p class="text-slate-500 mb-4 text-lg">勾選「否」計入高風險</p>
+                    <p class="text-slate-500 mb-4 text-lg">不符資格將強制計入高風險點</p>
                     <div class="grid grid-cols-2 gap-3">
                         <label class="risk-option"><input type="radio" name="op_license" value="yes" onclick="calculateRisk()" checked><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">是</div></label>
                         <label class="risk-option"><input type="radio" name="op_license" value="no" onclick="calculateRisk()"><div class="option-btn h-16 flex items-center justify-center rounded-xl bg-white border-slate-200 text-xl font-black">否</div></label>
@@ -147,20 +152,20 @@
                 </div>
             </section>
 
-            <!-- 三、後勤紀錄 -->
+            <!-- 後勤紀錄 -->
             <section class="space-y-6">
-                <h2 class="text-3xl font-black text-slate-900 border-l-8 border-slate-700 pl-4">三、後勤紀錄與日誌</h2>
+                <h2 class="text-3xl font-black text-slate-900 border-l-8 border-slate-700 pl-4 uppercase tracking-wider">III. 後勤紀錄與日誌</h2>
                 <div class="p-8 bg-slate-900 rounded-[2rem] text-white space-y-6 shadow-inner">
                     <div class="flex items-center space-x-6">
-                        <input type="checkbox" id="l1" class="w-10 h-10 accent-blue-500"><label for="l1" class="text-2xl font-bold">機體保養紀錄 (零件/電池次數)</label>
+                        <input type="checkbox" id="l1" class="w-10 h-10 accent-blue-500"><label for="l1" class="text-2xl font-bold">機體保養與電池狀態確認</label>
                     </div>
                     <div class="flex items-center space-x-6">
-                        <input type="checkbox" id="l2" class="w-10 h-10 accent-blue-500"><label for="l2" class="text-2xl font-bold">飛航日誌 Log 已同步</label>
+                        <input type="checkbox" id="l2" class="w-10 h-10 accent-blue-500"><label for="l2" class="text-2xl font-bold">飛航日誌 Log 確認已同步</label>
                     </div>
                 </div>
             </section>
 
-            <!-- 作者署名 -->
+            <!-- 作者署名區 -->
             <div class="py-8 px-10 bg-slate-100 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 border">
                 <div class="text-center md:text-left">
                     <p class="text-slate-500 text-xs font-black uppercase tracking-widest mb-1">Table Designer</p>
@@ -173,14 +178,16 @@
                     <span class="text-slate-900 text-2xl font-black">李宇軒</span>
                 </div>
             </div>
+
+            <!-- 超大緩衝區防止擋住 -->
+            <div class="h-64"></div>
         </form>
     </div>
 
-    <!-- 固定 HUD (修復手機端遮擋) -->
+    <!-- 底部固定 HUD (V5.2 航空配色) -->
     <div class="fixed bottom-0 left-0 w-full bg-slate-900/95 backdrop-blur-md border-t-4 border-slate-700 p-4 md:p-8 z-50 no-print shadow-[0_-15px_40px_rgba(0,0,0,0.4)]">
         <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 md:gap-10 mobile-hub-compact">
             
-            <!-- 數據 (手機端水平排版) -->
             <div class="flex items-center justify-around w-full md:w-1/3 md:space-x-12">
                 <div class="text-center">
                     <span class="block text-slate-400 font-bold text-xs uppercase mobile-hide-label">High</span>
@@ -192,9 +199,8 @@
                 </div>
             </div>
             
-            <!-- 決策 (手機端縮小) -->
             <div id="decisionBox" class="w-full md:w-1/3 p-4 md:p-6 rounded-2xl bg-slate-800 text-center border-4 border-slate-600 transition-all">
-                <span id="decisionText" class="text-xl md:text-2xl font-black text-slate-400">請完成評估</span>
+                <span id="decisionText" class="text-xl md:text-2xl font-black text-slate-400 mobile-text-decision">完成評估以判定</span>
             </div>
 
             <button onclick="window.print()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 md:py-6 rounded-2xl text-xl md:text-2xl font-black transition-all active:scale-95">
@@ -203,16 +209,26 @@
         </div>
     </div>
 
-    <!-- 列印格式 -->
+    <!-- PDF 列印樣式區 (一頁式) -->
     <div class="print-only">
         <div class="text-center border-b-4 border-black pb-4 mb-6">
-            <h1 class="text-3xl font-bold">UAV MISSION RISK REPORT</h1>
-            <p>日期：<span id="pDate"></span> | 飛航日誌：已同步</p>
+            <h1 class="text-3xl font-black">UAV MISSION RISK MANAGEMENT REPORT</h1>
+            <p class="text-lg">機型：<span id="pUav"></span> | 操作者：<span id="pPilot"></span> | 日期：<span id="pDate"></span></p>
         </div>
-        <table class="w-full report-table mb-8" id="pContent"></table>
-        <div class="grid grid-cols-2 gap-10 mt-10">
-            <div class="border-2 border-black p-4 h-32 rounded-lg"><strong>指揮官簽署 (IC)</strong></div>
-            <div class="border-2 border-black p-4 h-32 rounded-lg"><strong>操作人簽署 (PIC)</strong></div>
+        <table class="w-full report-table" id="pContent"></table>
+        <div class="grid grid-cols-2 gap-10 mt-12">
+            <div class="border-2 border-black p-4 h-32 rounded-lg flex flex-col justify-between">
+                <span class="font-bold">任務指揮官簽署 (IC Signature)</span>
+                <span class="text-slate-400 text-xs">DATE: ____ / ____ / ____</span>
+            </div>
+            <div class="border-2 border-black p-4 h-32 rounded-lg flex flex-col justify-between">
+                <span class="font-bold">主操作人簽署 (PIC Signature)</span>
+                <span class="text-slate-400 text-xs">CERTIFICATE NO: ____________</span>
+            </div>
+        </div>
+        <div class="mt-8 pt-4 border-t text-xs text-slate-500 flex justify-between">
+            <span>設計：陳錦樺 (安全第一 · 預案先行)</span>
+            <span>系統：李宇軒</span>
         </div>
     </div>
 
@@ -232,6 +248,7 @@
                 if (key === 'op_license' && value === 'no') high++;
             }
 
+            // 任務難度自動加權
             if (missionCount > 0 && missionCount < 1) high++;
             else if (missionCount >= 1 && missionCount < 5) mid++;
 
@@ -242,13 +259,13 @@
             const text = document.getElementById('decisionText');
 
             if (high >= 2) setUI(box, text, "❌ 任務中止：風險過高", "#dc2626");
-            else if (high === 1 && mid >= 3) setUI(box, text, "❌ 任務中止：累積風險", "#ef4444");
+            else if (high === 1 && mid >= 3) setUI(box, text, "❌ 任務中止：綜合風險", "#ef4444");
             else if (high === 1 && mid <= 2) setUI(box, text, "⚠️ 條件執行：極度謹慎", "#f97316");
-            else if (high === 0 && mid >= 5) setUI(box, text, "❌ 不建議起飛", "#fb923c");
-            else if (high === 0 && mid >= 3) setUI(box, text, "⚠ 謹慎飛行", "#f59e0b");
+            else if (high === 0 && mid >= 5) setUI(box, text, "❌ 不建議起飛：累積點過多", "#fb923c");
+            else if (high === 0 && mid >= 3) setUI(box, text, "⚠ 謹慎飛行：預案先行", "#f59e0b");
             else setUI(box, text, "✅ 安全：准許執行", "#10b981");
 
-            updatePrint();
+            syncPrint();
         }
 
         function setUI(box, text, msg, color) {
@@ -258,25 +275,29 @@
             text.style.color = "white";
         }
 
-        function updatePrint() {
+        function syncPrint() {
             const items = [
                 { id: "1. 空域合法性", name: "env_air" },
                 { id: "2. 氣象能見度", name: "env_weather" },
-                { id: "3. 硬鐵干擾 (Static)", name: "mag_hard" },
-                { id: "4. 軟鐵干擾 (Static)", name: "mag_soft" },
-                { id: "5. 電磁干擾 (Dynamic)", name: "mag_emi" },
-                { id: "6. 證照任務資格", name: "op_license" },
-                { id: "7. 飛行前檢查", name: "op_pre" }
+                { id: "3. 硬鐵磁干擾", name: "mag_hard" },
+                { id: "4. 軟鐵磁干擾", name: "mag_soft" },
+                { id: "5. 電磁干擾 (EMI)", name: "mag_emi" },
+                { id: "6. 證照符合資格", name: "op_license" },
+                { id: "7. 飛行前 360 度檢查", name: "op_pre" }
             ];
-            let html = "<thead><tr><th class='border-2 text-left'>項目</th><th class='border-2'>結果</th></tr></thead><tbody>";
+            let html = "<thead><tr class='bg-slate-100'><th class='border-2 text-left'>飛航維度評估項目</th><th class='border-2 text-center'>判定結果</th></tr></thead><tbody>";
             items.forEach(item => {
-                const val = document.querySelector(`input[name="${item.name}"]:checked`).value;
-                let l = val === 'high' || val === 'no' ? "🔴 HIGH" : val === 'mid' ? "🟡 MID" : "🟢 SAFE";
-                html += `<tr><td class='border p-2 font-bold'>${item.id}</td><td class='border p-2 text-center font-black'>${l}</td></tr>`;
+                const checked = document.querySelector(`input[name="${item.name}"]:checked`);
+                const val = checked ? checked.value : "safe";
+                let status = (val === 'high' || val === 'no') ? "🔴 HIGH RISK" : val === 'mid' ? "🟡 MODERATE" : "🟢 SAFE";
+                html += `<tr><td class='border p-2 font-bold'>${item.id}</td><td class='border p-2 text-center font-black'>${status}</td></tr>`;
             });
             document.getElementById('pContent').innerHTML = html + "</tbody>";
             document.getElementById('pDate').innerText = document.getElementById('mission_date').value;
+            document.getElementById('pPilot').innerText = document.getElementById('pilot_name').value || "未填寫";
+            document.getElementById('pUav').innerText = document.getElementById('mission_uav').value || "未填寫";
         }
+        
         calculateRisk();
     </script>
 </body>
